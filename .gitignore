@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+
+# Environment variables
+.env
+
+
+# Database
+data/database/
+*.db
+
+# Raw data 
+data/raw_pdfs/*
+!data/raw_pdfs/recipes.pdf
+
+
+# Build / distribution
+build/
+dist/
+*.egg-info/
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
