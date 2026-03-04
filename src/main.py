@@ -16,6 +16,7 @@ Requirements:
 """
 
 from pathlib import Path
+import os
 from pypdf import PdfReader
 from langchain_ollama import ChatOllama
 
@@ -102,7 +103,11 @@ def main():
     print(f"Found: {list(pdfs.keys())}")
 
     # Initialize Ollama LLM with gemma3:4b model
-    llm = ChatOllama(model="gemma3:4b")
+    ollama_base_url = os.getenv("OLLAMA_BASE_URL")
+    llm_kwargs = {"model": "gemma3:4b"}
+    if ollama_base_url:
+        llm_kwargs["base_url"] = ollama_base_url
+    llm = ChatOllama(**llm_kwargs)
 
     # Process each PDF file
     for filename, content in pdfs.items():

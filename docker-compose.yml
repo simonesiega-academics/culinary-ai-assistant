@@ -1,0 +1,26 @@
+services:
+  app:
+    build:
+      context: .
+      args:
+        PYTHON_VERSION: "3.13"
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      - ollama
+
+  ollama:
+    image: ollama/ollama:latest
+    gpus: all
+    environment:
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
+volumes:
+  ollama_data:
