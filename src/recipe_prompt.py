@@ -18,7 +18,8 @@ Split the text into individual recipes. For each recipe, extract and format:
 
 1. **NAME**: the recipe name
 2. **DESCRIPTION**: a brief description of the recipe (2-3 sentences)
-3. **STEPS**: the preparation steps numbered sequentially
+3. **INGREDIENTS**: list all ingredients required
+4. **PROCEDURE**: the preparation steps numbered sequentially
 
 Use this exact format for each recipe:
 
@@ -27,7 +28,13 @@ NAME: [recipe name]
 
 DESCRIPTION: [description]
 
-STEPS:
+INGREDIENTS:
+- [ingredient 1]
+- [ingredient 2]
+- [ingredient 3]
+...
+
+PROCEDURE:
 1. [step 1]
 2. [step 2]
 3. [step 3]

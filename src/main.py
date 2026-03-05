@@ -4,7 +4,7 @@ Main entry point for recipe extraction from PDF files.
 This script:
 1. Reads all PDF files from the raw_pdfs directory
 2. Uses an LLM (Ollama gemma3:4b) to split the text into individual recipes
-3. Extracts NAME, DESCRIPTION, and STEPS for each recipe
+3. Extracts NAME, DESCRIPTION, INGREDIENTS, and PROCEDURE for each recipe
 4. Prints the formatted results
 
 Usage:
@@ -65,7 +65,8 @@ def split_into_recipes(llm, text: str) -> list:
     The LLM is prompted to extract:
     - NAME: Recipe name
     - DESCRIPTION: Brief description (2-3 sentences)
-    - STEPS: Numbered preparation steps
+    - INGREDIENTS: List of required ingredients
+    - PROCEDURE: Numbered preparation steps
 
     Args:
         llm: LangChain Ollama LLM instance

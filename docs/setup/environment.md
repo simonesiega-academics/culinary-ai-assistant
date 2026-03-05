@@ -86,13 +86,13 @@ conda activate ai-culinary-assistant
 Run the main application:
 
 ``` bash
-python aicompanion.py
+python main.py
 ```
 
 Run the test version:
 
 ``` bash
-python aicompanion_test.py
+python main_test.py
 ```
 
 ## 7. Using venv Instead of Conda (Alternative)
