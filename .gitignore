@@ -20,7 +20,7 @@ data/database/
 *.db
 
 # Raw data 
-data/raw_pdfs/*
+data/*
 !data/raw_pdfs/recipes.pdf
 
 
