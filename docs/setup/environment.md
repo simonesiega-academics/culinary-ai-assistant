@@ -9,31 +9,31 @@ environment and run the project.
 
 Create a dedicated virtual environment for the project:
 
-``` bash
+```bash
 conda create -n ai-culinary-assistant python=3.13
 ```
 
 Activate the environment:
 
-``` bash
+```bash
 conda activate ai-culinary-assistant
 ```
 
 Deactivate the environment:
 
-``` bash
+```bash
 conda deactivate
 ```
 
 Remove the environment (only if necessary):
 
-``` bash
+```bash
 conda remove -n ai-culinary-assistant --all
 ```
 
 ## 2. Clone the Repository
 
-``` bash
+```bash
 git clone https://github.com/simone-academics/hs-ai-culinary-assistant.git
 cd hs-ai-culinary-assistant
 ```
@@ -42,19 +42,19 @@ cd hs-ai-culinary-assistant
 
 Upgrade pip (recommended):
 
-``` bash
+```bash
 python -m pip install --upgrade pip
 ```
 
 Install all required packages from `requirements.txt`:
 
-``` bash
+```bash
 pip install -r requirements.txt
 ```
 
 Verify installed packages:
 
-``` bash
+```bash
 pip list
 ```
 
@@ -62,7 +62,7 @@ pip list
 
 Upgrade all dependencies listed in `requirements.txt`:
 
-``` bash
+```bash
 pip install -r requirements.txt --upgrade
 ```
 
@@ -70,28 +70,27 @@ pip install -r requirements.txt --upgrade
 
 Generate an updated `requirements.txt` file:
 
-``` bash
+```bash
 pip freeze > requirements.txt
 ```
-
 
 ## 6. Run the Project
 
 Make sure the environment is active:
 
-``` bash
+```bash
 conda activate ai-culinary-assistant
 ```
 
 Run the main application:
 
-``` bash
+```bash
 python main.py
 ```
 
 Run the test version:
 
-``` bash
+```bash
 python main_test.py
 ```
 
@@ -102,31 +101,31 @@ environment.
 
 Create virtual environment:
 
-``` bash
+```bash
 python -m venv venv
 ```
 
 Activate on Windows:
 
-``` bash
+```bash
 venv\Scripts\activate
 ```
 
 Activate on macOS/Linux:
 
-``` bash
+```bash
 source venv/bin/activate
 ```
 
 Install dependencies:
 
-``` bash
+```bash
 pip install -r requirements.txt
 ```
 
 Deactivate:
 
-``` bash
+```bash
 deactivate
 ```
 
@@ -134,7 +133,7 @@ deactivate
 
 Check Python version:
 
-``` bash
+```bash
 python --version
 ```
 
@@ -142,24 +141,24 @@ Check environment path:
 
 Windows:
 
-``` bash
+```bash
 where python
 ```
 
 macOS/Linux:
 
-``` bash
+```bash
 which python
 ```
 
 Check installed Conda environments:
 
-``` bash
+```bash
 conda env list
 ```
 
 ---
 
-# Environment Ready 
+# Environment Ready
 
 You are now ready to develop and run **AI Culinary Assistant**.

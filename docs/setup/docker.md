@@ -30,19 +30,24 @@ In practice: `app` runs your Python code and sends prompts to `ollama` over the 
 ## 1) Docker files in this project
 
 ### `Dockerfile`
+
 Builds the Python application image.
 
 In this project it:
+
 1. Uses `python:<version>-slim` (default `3.13`)
 2. Installs system dependencies needed by the stack (`ffmpeg`, `espeak-ng`)
 3. Installs Python dependencies from `requirements.txt`
 4. Starts the app with `python src/main.py`
 
 ### `.dockerignore`
+
 Excludes unnecessary files from build context for faster builds (for example `.git`, caches, local envs, `docs`, `data`).
 
 ### `docker-compose.yml`
+
 Defines two services:
+
 - `app`: this project
 - `ollama`: Ollama server with GPU enabled (`gpus: all`)
 
@@ -57,6 +62,7 @@ It also defines `ollama_data` volume to persist downloaded models.
 - Downloaded models are stored in the Docker volume `ollama_data`.
 
 Important:
+
 - `OLLAMA_BASE_URL` is only a connection URL between containers
 - Ollama itself comes from image `ollama/ollama:latest`
 - Models (for example `gemma3:4b`) are downloaded separately via `ollama pull`
@@ -224,14 +230,17 @@ To change Python version, edit `docker-compose.yml` under `services.app.build.ar
 ## 10) Useful troubleshooting
 
 ### App cannot connect to Ollama
+
 Cause: Ollama not started yet.
 
 Fix:
+
 1. `docker compose up -d ollama`
 2. Wait a few seconds
 3. `docker compose up app`
 
 ### Error: model not found
+
 Cause: model was not pulled.
 
 Fix:
@@ -241,7 +250,9 @@ docker compose exec ollama ollama pull gemma3:4b
 ```
 
 ### GPU not used
+
 Possible causes:
+
 - host driver issue
 - Docker GPU support not available
 
@@ -253,6 +264,7 @@ docker compose exec ollama ollama ps
 ```
 
 ### Disk usage too high
+
 Remove unused models and cleanup:
 
 ```bash
@@ -266,6 +278,7 @@ docker system df
 ## 11) Share with other users
 
 ### Option A: Share source code
+
 Other users run:
 
 ```bash
@@ -275,6 +288,7 @@ docker compose up app
 ```
 
 ### Option B: Publish app image
+
 You can publish your `app` image, but users still need an Ollama service and model pull unless you provide a custom Ollama image strategy.
 
 ---

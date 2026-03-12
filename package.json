@@ -1,0 +1,11 @@
+{
+  "name": "culinary-ai-assistant",
+  "private": true,
+  "scripts": {
+    "format": "prettier --write \"**/*.{json,md,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{json,md,yml,yaml}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.5.3"
+  }
+}
