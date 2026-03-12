@@ -1,138 +1,207 @@
-"""
-Main entry point for recipe extraction from PDF files.
+from __future__ import annotations
 
-This script:
-1. Reads all PDF files from the raw_pdfs directory
-2. Uses an LLM (Ollama gemma3:4b) to split the text into individual recipes
-3. Extracts NAME, DESCRIPTION, INGREDIENTS, and PROCEDURE for each recipe
-4. Prints the formatted results
-
-Usage:
-    python -m src.main
-
-Requirements:
-    - PDF files must be placed in data/raw_pdfs/
-    - Ollama must be running with gemma3:4b model installed
-"""
-
-from pathlib import Path
 import os
-from pypdf import PdfReader
+import re
+from dataclasses import dataclass
+from pathlib import Path
+
 from langchain_ollama import ChatOllama
+from pypdf import PdfReader
 
-# Import prompt from recipe_prompt module
-from recipe_prompt import RECIPE_SPLIT_PROMPT
+try:
+    from .prompt import RECIPE_SPLIT_PROMPT, SQL_RECIPE_BLOCK_PROMPT
+except ImportError:
+    from prompt import RECIPE_SPLIT_PROMPT, SQL_RECIPE_BLOCK_PROMPT
 
-# Separator used to split recipe chunks in LLM output
+
 RECIPE_SEPARATOR = "---SEPARATE_RECIPE---"
+SQL_HEADER = "USE ricettario;"
+DEFAULT_MODEL_NAME = "gemma3:4b"
+DEFAULT_OUTPUT_FILENAME = "insert_recipes.sql"
 
 
-def read_pdfs_from_directory(directory: str) -> dict:
-    """
-    Read all PDF files from a directory and extract text content.
+@dataclass(frozen=True)
+class AppConfig:
+    """Runtime configuration for the PDF-to-SQL pipeline."""
 
-    Args:
-        directory: Path to directory containing PDF files
+    project_root: Path
+    pdf_dir: Path
+    schema_path: Path
+    output_path: Path
+    model_name: str
+    ollama_base_url: str | None
 
-    Returns:
-        Dictionary with filename as key and extracted text as value.
-        If an error occurs, the value contains the error message.
-    """
-    pdf_dir = Path(directory)
-    results = {}
-    
-    # Iterate over all PDF files in the directory
-    for pdf_path in pdf_dir.glob("*.pdf"):
+
+def load_config() -> AppConfig:
+    """Build runtime configuration from project paths and environment."""
+    project_root = Path(__file__).resolve().parent.parent
+    return AppConfig(
+        project_root=project_root,
+        pdf_dir=project_root / "data" / "raw_pdfs",
+        schema_path=project_root / "db" / "schema" / "create.sql",
+        output_path=project_root / "db" / "seed" / DEFAULT_OUTPUT_FILENAME,
+        model_name=os.getenv("OLLAMA_MODEL", DEFAULT_MODEL_NAME),
+        ollama_base_url=os.getenv("OLLAMA_BASE_URL"),
+    )
+
+
+def ensure_required_paths(config: AppConfig) -> None:
+    """Fail fast when required input paths are missing."""
+    if not config.pdf_dir.exists():
+        raise FileNotFoundError(f"PDF directory not found: {config.pdf_dir}")
+    if not config.schema_path.exists():
+        raise FileNotFoundError(f"Schema file not found: {config.schema_path}")
+
+
+def read_pdfs_from_directory(directory: Path) -> dict[str, str]:
+    """Read all PDFs in a directory and return extracted text by filename."""
+    results: dict[str, str] = {}
+
+    for pdf_path in sorted(directory.glob("*.pdf")):
         try:
             reader = PdfReader(str(pdf_path))
-            text = ""
-            
-            # Extract text from each page
-            for page in reader.pages:
-                text += page.extract_text() + "\n"
-            
-            results[pdf_path.name] = text
-        except Exception as e:
-            results[pdf_path.name] = f"Error: {str(e)}"
-    
+            pages = [page.extract_text() or "" for page in reader.pages]
+            results[pdf_path.name] = "\n".join(pages).strip()
+        except Exception as exc:
+            results[pdf_path.name] = f"Error: {exc}"
+
     return results
 
 
-def split_into_recipes(llm, text: str) -> list:
-    """
-    Use LLM to split raw PDF text into individual recipes.
+def create_llm(config: AppConfig) -> ChatOllama:
+    """Create the Ollama chat client used by the pipeline."""
+    llm_kwargs = {
+        "model": config.model_name,
+        "temperature": 0,
+    }
+    if config.ollama_base_url:
+        llm_kwargs["base_url"] = config.ollama_base_url
+    return ChatOllama(**llm_kwargs)
 
-    The LLM is prompted to extract:
-    - NAME: Recipe name
-    - DESCRIPTION: Brief description (2-3 sentences)
-    - INGREDIENTS: List of required ingredients
-    - PROCEDURE: Numbered preparation steps
 
-    Args:
-        llm: LangChain Ollama LLM instance
-        text: Raw PDF text containing one or more recipes
-
-    Returns:
-        List of recipe strings, each formatted according to the prompt template
-    """
-    # Format prompt with the PDF text
+def split_into_recipes(llm: ChatOllama, text: str) -> list[str]:
+    """Use the LLM to split raw PDF text into structured recipes."""
     prompt = RECIPE_SPLIT_PROMPT.format(pdf_text=text)
-    
-    # Invoke LLM to process the text
     response = llm.invoke(prompt)
-    
-    # Split response by separator to get individual recipes
-    recipes = response.content.split(RECIPE_SEPARATOR)
-    
-    # Filter out empty strings
-    return [r.strip() for r in recipes if r.strip()]
+    content = getattr(response, "content", "")
+    return [chunk.strip() for chunk in content.split(RECIPE_SEPARATOR) if chunk.strip()]
 
 
-def main():
-    """
-    Main execution function.
+def sanitize_sql_output(sql_text: str) -> str:
+    """Remove wrappers the model may add and normalize the SQL block."""
+    cleaned = sql_text.strip()
 
-    Reads PDFs from data/raw_pdfs, processes each with the LLM,
-    and prints the extracted recipes.
-    """
-    # Define path to raw_pdfs directory 
-    pdf_dir = Path(__file__).resolve().parent.parent / "data" / "raw_pdfs"
-    print(f"Looking in: {pdf_dir}")
-    
-    # Read all PDFs from the directory
-    pdfs = read_pdfs_from_directory(str(pdf_dir))
-    print(f"Found: {list(pdfs.keys())}")
+    if cleaned.startswith("```"):
+        cleaned = re.sub(r"^```[a-zA-Z0-9_-]*\s*", "", cleaned)
+        cleaned = re.sub(r"\s*```$", "", cleaned)
 
-    # Initialize Ollama LLM with gemma3:4b model
-    ollama_base_url = os.getenv("OLLAMA_BASE_URL")
-    llm_kwargs = {"model": "gemma3:4b"}
-    if ollama_base_url:
-        llm_kwargs["base_url"] = ollama_base_url
-    llm = ChatOllama(**llm_kwargs)
+    lines: list[str] = []
+    for line in cleaned.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            lines.append("")
+            continue
+        if stripped.lower() == SQL_HEADER.lower():
+            continue
+        lines.append(line.rstrip())
 
-    # Process each PDF file
-    for filename, content in pdfs.items():
-        print(f"Processing: {filename}\n")
+    return "\n".join(lines).strip()
 
-        # Handle PDF reading errors
+
+def generate_recipe_sql_block(llm: ChatOllama, recipe_text: str, schema_sql: str) -> str:
+    """Generate the SQL block for a single structured recipe."""
+    prompt = SQL_RECIPE_BLOCK_PROMPT.format(
+        schema_sql=schema_sql,
+        recipe_text=recipe_text,
+    )
+    response = llm.invoke(prompt)
+    content = getattr(response, "content", "")
+    return sanitize_sql_output(content)
+
+
+def collect_structured_recipes(llm: ChatOllama, pdf_texts: dict[str, str]) -> list[tuple[str, str]]:
+    """Extract structured recipes from all PDFs."""
+    structured_recipes: list[tuple[str, str]] = []
+
+    for filename, content in pdf_texts.items():
+        print(f"Processing PDF: {filename}")
+
         if content.startswith("Error:"):
-            print(content)
+            print(f"  {content}")
             continue
 
-        print("Splitting into recipes...")
-        
-        # Extract individual recipes using LLM
         recipes = split_into_recipes(llm, content)
+        print(f"  Extracted recipes: {len(recipes)}")
 
-        print(f"Found {len(recipes)} recipes\n")
+        for index, recipe in enumerate(recipes, start=1):
+            structured_recipes.append((f"{filename}#{index}", recipe))
 
-        # Print each recipe with formatting
-        for i, recipe in enumerate(recipes, 1):
-            print(f"{'='*60}")
-            print(f"RECIPE {i}")
-            print(f"{'='*60}")
-            print(recipe)
-            print()
+    return structured_recipes
+
+
+def summarize_pdf_results(pdf_texts: dict[str, str]) -> tuple[int, int]:
+    """Return counts for readable PDFs and read failures."""
+    successful = sum(1 for content in pdf_texts.values() if not content.startswith("Error:"))
+    failed = len(pdf_texts) - successful
+    return successful, failed
+
+
+def build_seed_sql(
+    llm: ChatOllama,
+    structured_recipes: list[tuple[str, str]],
+    schema_sql: str,
+) -> str:
+    """Generate the final SQL seed file content."""
+    sql_blocks = [SQL_HEADER, ""]
+
+    for source_label, recipe_text in structured_recipes:
+        print(f"Generating SQL block: {source_label}")
+        sql_block = generate_recipe_sql_block(llm, recipe_text, schema_sql)
+
+        if not sql_block:
+            raise ValueError(f"Empty SQL block generated for {source_label}")
+
+        sql_blocks.append(sql_block)
+        sql_blocks.append("")
+
+    return "\n".join(sql_blocks).strip() + "\n"
+
+
+def write_seed_file(output_path: Path, sql_content: str) -> None:
+    """Write the generated SQL seed file to disk."""
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(sql_content, encoding="utf-8")
+
+
+def main() -> None:
+    """Read recipe PDFs, extract recipes, and generate the SQL seed file."""
+    config = load_config()
+    ensure_required_paths(config)
+
+    print(f"Reading PDFs from: {config.pdf_dir}")
+    pdfs = read_pdfs_from_directory(config.pdf_dir)
+    print(f"PDF files found: {len(pdfs)}")
+
+    if not pdfs:
+        raise RuntimeError(f"No PDF files found in {config.pdf_dir}")
+
+    readable_pdfs, failed_pdfs = summarize_pdf_results(pdfs)
+    print(f"Readable PDFs: {readable_pdfs} | Failed PDFs: {failed_pdfs}")
+
+    llm = create_llm(config)
+    print(f"Using model: {config.model_name}")
+
+    schema_sql = config.schema_path.read_text(encoding="utf-8")
+    structured_recipes = collect_structured_recipes(llm, pdfs)
+    print(f"Total structured recipes: {len(structured_recipes)}")
+
+    if not structured_recipes:
+        raise RuntimeError("No recipes extracted from the PDFs.")
+
+    seed_sql = build_seed_sql(llm, structured_recipes, schema_sql)
+    write_seed_file(config.output_path, seed_sql)
+
+    print(f"SQL seed file created: {config.output_path}")
 
 
 if __name__ == "__main__":

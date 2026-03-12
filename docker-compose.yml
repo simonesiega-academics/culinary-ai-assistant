@@ -8,6 +8,7 @@ services:
       OLLAMA_BASE_URL: http://ollama:11434
     volumes:
       - ./data:/app/data
+      - ./db:/app/db
     depends_on:
       - ollama
 
