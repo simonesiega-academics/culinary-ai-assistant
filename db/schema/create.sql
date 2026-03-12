@@ -26,6 +26,7 @@ CREATE TABLE ricetta (
     difficolta TINYINT UNSIGNED NOT NULL,
     categoria BIGINT UNSIGNED NOT NULL,
     PRIMARY KEY (id),
+    CONSTRAINT uq_ricetta_nome UNIQUE (nome),
     CONSTRAINT fk_ricetta_categoria
         FOREIGN KEY (categoria)
         REFERENCES categoria (id)

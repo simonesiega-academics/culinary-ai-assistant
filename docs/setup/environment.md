@@ -162,4 +162,4 @@ conda env list
 
 # Environment Ready 
 
-You are now ready to develop and run **hs-ai-culinary-assistant**.
+You are now ready to develop and run **AI Culinary Assistant**.

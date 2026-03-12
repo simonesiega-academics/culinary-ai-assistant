@@ -18,6 +18,7 @@ ENV/
 # Database
 data/database/
 *.db
+db/generated/
 
 # Raw data 
 data/raw_pdfs/*
