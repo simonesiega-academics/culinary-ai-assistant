@@ -3,8 +3,7 @@ FROM python:${PYTHON_VERSION}-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PYTHONPATH=/app/src
+    PIP_NO_CACHE_DIR=1
 
 WORKDIR /app
 
@@ -13,10 +12,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     espeak-ng \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt ./
+COPY backend/requirements.txt /tmp/requirements.txt
+RUN pip install --upgrade pip && pip install -r /tmp/requirements.txt
 
-RUN pip install --upgrade pip && pip install -r requirements.txt
+COPY backend /app
 
-COPY . .
+EXPOSE 8000
 
-CMD ["python", "src/main.py"]
+CMD ["python", "-m", "app.main"]

@@ -1,6 +1,0 @@
-.git
-node_modules
-data/
-db/seed/
-__pycache__/
-*.pyc

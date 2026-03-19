@@ -1,0 +1,5 @@
+flask
+langchain
+langchain_ollama
+mysql-connector-python
+pypdf

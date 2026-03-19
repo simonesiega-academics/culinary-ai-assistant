@@ -1,13 +1,11 @@
-<h1 align="center">Contributing to Culinary AI Assistant</h1>
+<h1 align="center">Contributing Guide</h1>
 
 <p align="center">
   Guidelines for contributing to <strong>Culinary AI Assistant</strong>.
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/github/stars/simonesiega-academics/culinary-ai-assistant?style=social" />
   <img src="https://img.shields.io/github/forks/simonesiega-academics/culinary-ai-assistant" />
-  <img src="https://img.shields.io/github/last-commit/simonesiega-academics/culinary-ai-assistant" />
   <img src="https://img.shields.io/github/issues-pr/simonesiega-academics/culinary-ai-assistant" />
   <img src="https://img.shields.io/github/issues/simonesiega-academics/culinary-ai-assistant" />
   <img src="https://img.shields.io/github/license/simonesiega-academics/culinary-ai-assistant" />
@@ -15,7 +13,7 @@
 
 ## Quick start 🚀
 
-If you are new to the project, read [`README.md`](README.md) first, then pick one issue and keep the PR scope small.
+If you are new to the project, read [`README.md`](README.md) first, then choose one focused issue and keep the pull request scope small.
 
 | Step | Action                               |
 | ---- | ------------------------------------ |
@@ -30,7 +28,7 @@ Branch naming:
 | Type        | Pattern                     | Example                    |
 | ----------- | --------------------------- | -------------------------- |
 | Feature     | `feat/<short-description>`  | `feat/pdf-recipe-parser`   |
-| Bug fix     | `fix/<short-description>`   | `fix/ingredient-order-sql` |
+| Fix     | `fix/<short-description>`   | `fix/ingredient-order-sql` |
 | Docs        | `docs/<short-description>`  | `docs/update-ci-section`   |
 | Maintenance | `chore/<short-description>` | `chore/dependency-update`  |
 
@@ -51,7 +49,7 @@ Please include:
 | Logs / error output                              | Speeds root-cause analysis                    |
 | Sample input/output (if relevant)                | Clarifies parsing and SQL generation outcomes |
 
-Tip: for architecture-level changes, open an issue first so we can align on design early.
+Tip: for architecture-level changes, open an issue first so design decisions can be aligned early.
 
 ---
 
@@ -59,26 +57,52 @@ Tip: for architecture-level changes, open an issue first so we can align on desi
 
 Choose one of the following workflows.
 
-### Python + Node workflow
+### Hybrid local workflow (frontend/backend on host, services in Docker)
+
+Use this workflow for faster iteration while developing application code.
+
+Frontend checks:
 
 ```bash
-npm ci
+cd frontend
+npm install
 npm run format:check
+npm run typecheck
+npm run build
+```
 
-python -m pip install -r requirements.txt
-ruff check src
-python -m compileall src
-pytest
+Backend checks:
+
+```bash
+python -m pip install -r backend/requirements.txt
+python -m compileall backend/app
+```
+
+Optional end-to-end smoke check (requires Dockerized support services):
+
+```bash
+docker compose up -d mariadb ollama
+curl -X POST -F "file=@data/raw_pdfs/recipes.pdf" http://localhost:8000/api/v1/agent-1/ingest
 ```
 
 ### Docker workflow
+
+Use this workflow to validate the full stack in containers.
 
 ```bash
 docker compose up --build
 ```
 
+Recommended follow-up checks:
+
+```bash
+docker compose ps
+curl http://localhost:8000/api/v1/health
+```
+
 Reference docs:
 
+- [Local setup guide](docs/setup/environment.md)
 - [Docker guide](docs/setup/docker.md)
 
 ---

@@ -18,7 +18,6 @@ ENV/
 # Database
 data/database/
 *.db
-db/seed/
 
 # Raw data 
 data/raw_pdfs/*
@@ -32,11 +31,28 @@ dist/
 
 # Node
 node_modules/
+frontend/.next/
+frontend/node_modules/
+frontend/.env.local
+frontend/tsconfig.tsbuildinfo
+
+# Python backend
+backend/.venv/
+backend/venv/
+backend/__pycache__/
+backend/app/__pycache__/
+backend/app/*/__pycache__/
+backend/app/*/*/__pycache__/
+backend/app/*/*/*/__pycache__/
+backend/.env
 
 # Testing / coverage
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Docker
+**/.DS_Store
 
 # Jupyter
 .ipynb_checkpoints/

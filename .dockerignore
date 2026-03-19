@@ -22,3 +22,6 @@ Thumbs.db
 
 docs/
 data/
+frontend/node_modules/
+frontend/.next/
+backend/__pycache__/
